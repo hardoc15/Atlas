@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { SnapshotManager } from './snapshotManager';
 import { Snapshot } from './types';
+import { DiffViewer } from './diffViewer';
 
 /**
  * TimelinePanel manages the webview that displays snapshot history
@@ -68,6 +69,9 @@ export class TimelinePanel {
                     case 'refresh':
                         this.refresh();
                         return;
+                    case 'compareDiff':
+                        await this.compareDiff(message.oldSnapshotId, message.newSnapshotId);
+                        return;
                 }
             },
             null,
@@ -98,6 +102,18 @@ export class TimelinePanel {
             command: 'showSnapshot',
             snapshot: this.serializeSnapshot(snapshot)
         });
+    }
+
+    /**
+     * Compare two snapshots in diff viewer
+     */
+    private async compareDiff(oldSnapshotId: string, newSnapshotId: string) {
+        DiffViewer.createOrShow(
+            this._extensionUri,
+            this._snapshotManager,
+            oldSnapshotId,
+            newSnapshotId
+        );
     }
 
     /**
@@ -182,7 +198,12 @@ export class TimelinePanel {
                     margin-bottom: 20px;
                 }
 
-                .refresh-btn {
+                .header-buttons {
+                    display: flex;
+                    gap: 10px;
+                }
+
+                .btn {
                     background-color: var(--vscode-button-background);
                     color: var(--vscode-button-foreground);
                     border: none;
@@ -191,8 +212,31 @@ export class TimelinePanel {
                     border-radius: 2px;
                 }
 
-                .refresh-btn:hover {
+                .btn:hover {
                     background-color: var(--vscode-button-hoverBackground);
+                }
+
+                .btn-secondary {
+                    background-color: var(--vscode-button-secondaryBackground);
+                    color: var(--vscode-button-secondaryForeground);
+                }
+
+                .btn-secondary:hover {
+                    background-color: var(--vscode-button-secondaryHoverBackground);
+                }
+
+                .compare-badge {
+                    display: inline-block;
+                    background-color: var(--vscode-badge-background);
+                    color: var(--vscode-badge-foreground);
+                    padding: 4px 8px;
+                    border-radius: 3px;
+                    font-size: 11px;
+                    margin-left: 10px;
+                }
+
+                .snapshot-card.compare-selected {
+                    border: 2px solid var(--vscode-focusBorder);
                 }
 
                 .timeline {
@@ -296,8 +340,11 @@ export class TimelinePanel {
         </head>
         <body>
             <div class="header">
-                <h1>📸 Atlas Time Travel</h1>
-                <button class="refresh-btn" onclick="refresh()">Refresh</button>
+                <h1 id="header-title">📸 Atlas Time Travel</h1>
+                <div class="header-buttons">
+                    <button class="btn btn-secondary" id="compare-btn" onclick="toggleCompareMode()">Compare Mode</button>
+                    <button class="btn" onclick="refresh()">Refresh</button>
+                </div>
             </div>
 
             <div id="timeline" class="timeline"></div>
@@ -307,6 +354,8 @@ export class TimelinePanel {
                 const vscode = acquireVsCodeApi();
                 let snapshots = ${snapshotsJson};
                 let selectedSnapshotId = null;
+                let compareMode = false;
+                let compareSnapshots = { old: null, new: null };
 
                 function renderTimeline() {
                     const timeline = document.getElementById('timeline');
@@ -326,10 +375,16 @@ export class TimelinePanel {
                         const timeStr = date.toLocaleString();
                         const fileList = snapshot.files.map(f => f.path).join(', ');
                         const isSelected = snapshot.id === selectedSnapshotId ? 'selected' : '';
+                        const isCompareOld = compareMode && compareSnapshots.old === snapshot.id ? 'compare-selected' : '';
+                        const isCompareNew = compareMode && compareSnapshots.new === snapshot.id ? 'compare-selected' : '';
+                        const compareLabel = compareMode && compareSnapshots.old === snapshot.id ? 'OLD' :
+                                            compareMode && compareSnapshots.new === snapshot.id ? 'NEW' : '';
 
                         return \`
-                            <div class="snapshot-card \${isSelected}" onclick="selectSnapshot('\${snapshot.id}')">
-                                <div class="snapshot-time">\${timeStr}</div>
+                            <div class="snapshot-card \${isSelected} \${isCompareOld} \${isCompareNew}" onclick="selectSnapshot('\${snapshot.id}')">
+                                <div class="snapshot-time">\${timeStr}
+                                    \${compareLabel ? \`<span class="compare-badge">\${compareLabel}</span>\` : ''}
+                                </div>
                                 <span class="snapshot-trigger">\${snapshot.trigger}</span>
                                 <div class="snapshot-files">Files: \${fileList}</div>
                                 <div class="snapshot-id">\${snapshot.id}</div>
@@ -338,9 +393,52 @@ export class TimelinePanel {
                     }).join('');
                 }
 
+                function toggleCompareMode() {
+                    compareMode = !compareMode;
+                    const btn = document.getElementById('compare-btn');
+                    const title = document.getElementById('header-title');
+
+                    if (compareMode) {
+                        btn.textContent = 'Exit Compare Mode';
+                        btn.classList.remove('btn-secondary');
+                        btn.classList.add('btn');
+                        title.textContent = '📊 Compare Snapshots - Select OLD then NEW';
+                        compareSnapshots = { old: null, new: null };
+                        document.getElementById('snapshot-detail').classList.remove('visible');
+                    } else {
+                        btn.textContent = 'Compare Mode';
+                        btn.classList.remove('btn');
+                        btn.classList.add('btn-secondary');
+                        title.textContent = '📸 Atlas Time Travel';
+                        compareSnapshots = { old: null, new: null };
+                    }
+                    renderTimeline();
+                }
+
                 function selectSnapshot(snapshotId) {
-                    selectedSnapshotId = snapshotId;
-                    vscode.postMessage({ command: 'viewSnapshot', snapshotId: snapshotId });
+                    if (compareMode) {
+                        // In compare mode, select old then new
+                        if (!compareSnapshots.old) {
+                            compareSnapshots.old = snapshotId;
+                        } else if (!compareSnapshots.new) {
+                            compareSnapshots.new = snapshotId;
+                            // Both selected, show diff
+                            vscode.postMessage({
+                                command: 'compareDiff',
+                                oldSnapshotId: compareSnapshots.old,
+                                newSnapshotId: compareSnapshots.new
+                            });
+                            // Reset selections
+                            compareSnapshots = { old: null, new: null };
+                        } else {
+                            // Reset if both already selected
+                            compareSnapshots = { old: snapshotId, new: null };
+                        }
+                    } else {
+                        // Normal mode - view snapshot
+                        selectedSnapshotId = snapshotId;
+                        vscode.postMessage({ command: 'viewSnapshot', snapshotId: snapshotId });
+                    }
                     renderTimeline();
                 }
 

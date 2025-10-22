@@ -2,11 +2,12 @@
 
 A VS Code extension that automatically saves code snapshots and enables time-travel debugging.
 
-## Current Status: Phase 3 Complete ✅
+## Current Status: Phase 4 Complete ✅
 
 - ✅ Phase 1: File Watching
 - ✅ Phase 2: Snapshot System
 - ✅ Phase 3: Time Travel UI
+- ✅ Phase 4: Visual Diff Viewer
 
 ## Phase 1: Basic Extension & File Watcher ✅
 
@@ -116,6 +117,45 @@ Atlas/
 - ✅ VS Code theme integration (dark/light mode support)
 - ✅ Refresh button to update timeline
 
+## Phase 4: Visual Diff Viewer ✅
+
+### What We Built
+- Side-by-side diff comparison between any two snapshots
+- Visual highlighting for added/removed/unchanged lines
+- Compare mode in timeline panel
+- Separate diff viewer webview panel
+- Uses the `diff` library for intelligent line-by-line comparison
+
+### How to Use
+1. **Open Timeline Panel:**
+   - Run "Atlas: Open Time Travel" command
+
+2. **Enter Compare Mode:**
+   - Click "Compare Mode" button in the timeline
+   - Title changes to "Compare Snapshots - Select OLD then NEW"
+
+3. **Select Snapshots to Compare:**
+   - Click first snapshot (marked as "OLD")
+   - Click second snapshot (marked as "NEW")
+   - Diff viewer opens automatically in a new panel
+
+4. **View the Diff:**
+   - Green lines = Added content
+   - Red lines = Removed content
+   - White/gray lines = Unchanged content
+   - Files shown with status badges (ADDED, DELETED, MODIFIED)
+
+### Features Added
+- ✅ Diff algorithm integration (using `diff` npm package)
+- ✅ Line-by-line comparison with color coding
+- ✅ Compare mode toggle in timeline
+- ✅ Two-step selection (OLD → NEW)
+- ✅ Separate diff viewer panel
+- ✅ File status indicators (added/deleted/modified)
+- ✅ Unchanged files are filtered out
+- ✅ HTML escaping for safe code display
+- ✅ Before/After snapshot metadata display
+
 ## Development Commands
 
 ```bash
@@ -154,6 +194,13 @@ Press F5 in VS Code
 - Message Passing: Extension ↔ Webview communication
 - Event Handling: User interactions in webviews
 
+**Phase 4:**
+- Diff Algorithms: Line-by-line text comparison
+- NPM Package Integration: Using external libraries
+- Multi-panel Coordination: Managing multiple webviews
+- State Management: Toggle modes and selections
+- Visual Feedback: Color-coded diffs and status badges
+
 ### Available Commands
 - **Atlas: Start Watching Files** - Begin file monitoring
 - **Atlas: Stop Watching Files** - Stop file monitoring
@@ -165,11 +212,16 @@ Press F5 in VS Code
 - **extension.ts**: Main entry point, command registration
 - **fileWatcher.ts**: File change detection and snapshot triggering
 - **snapshotManager.ts**: Snapshot creation, storage, and retrieval
-- **timelinePanel.ts**: Webview panel for time travel UI
+- **timelinePanel.ts**: Webview panel for time travel UI with compare mode
+- **diffViewer.ts**: Diff comparison webview panel
 - **types.ts**: TypeScript interfaces and type definitions
+
+### Dependencies
+- **diff**: Text diffing library for line-by-line comparison
+- **@types/diff**: TypeScript type definitions for diff
 
 ---
 
-**Phase 1-3 Complete!** 🎉
+**Phase 1-4 Complete!** 🎉
 
-You now have a functional time-travel IDE with visual snapshot browsing!
+You now have a functional time-travel IDE with visual snapshot browsing and diff comparison!
