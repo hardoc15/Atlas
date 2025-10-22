@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Compiled output
+extension/out/
+extension/dist/
+
+# VS Code
+.vscode-test/
+*.vsix
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+
+# Atlas snapshots (user data - don't commit)
+.atlas/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Build files
+*.js.map
