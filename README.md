@@ -2,12 +2,13 @@
 
 A VS Code extension that automatically saves code snapshots and enables time-travel debugging with 20/20 hindsight.
 
-## Current Status: Phase 4 Complete ✅
+## Current Status: Phase 5 Complete ✅
 
 - ✅ Phase 1: File Watching
 - ✅ Phase 2: Snapshot System
 - ✅ Phase 3: Time Travel UI
 - ✅ Phase 4: Visual Diff Viewer
+- ✅ Phase 5: Restore Functionality
 
 ## Phase 1: Basic Extension & File Watcher ✅
 
@@ -156,6 +157,54 @@ Hindsight/
 - ✅ HTML escaping for safe code display
 - ✅ Before/After snapshot metadata display
 
+## Phase 5: Restore Functionality ✅
+
+### What We Built
+- Restore code to any previous snapshot
+- Automatic backup creation before restoring
+- User confirmation dialog with snapshot details
+- Progress notifications during restore
+- Restore button in snapshot details view
+- Safety checks and error handling
+
+### How to Use
+1. **Open Timeline Panel:**
+   - Run "Hindsight: Open Time Travel" command
+
+2. **Select a Snapshot:**
+   - Click any snapshot in the timeline
+   - View the snapshot details below
+
+3. **Restore:**
+   - Click the "⏮️ Restore to this Point" button
+   - Confirm the restore operation
+   - A backup is created automatically
+   - Files are restored to that snapshot's state
+
+4. **Safety Features:**
+   - Automatic backup before every restore
+   - Confirmation dialog shows which files will change
+   - Progress notification during restore
+   - Success/error messages with backup ID
+
+### Features Added
+- ✅ SnapshotManager.restoreSnapshot() method
+- ✅ Automatic backup creation (backup_* snapshots)
+- ✅ Recursive workspace file scanning
+- ✅ Directory creation for restored files
+- ✅ User confirmation dialog
+- ✅ Progress notifications
+- ✅ Restore button in UI
+- ✅ Error handling and reporting
+- ✅ Timeline refresh after restore
+
+### Safety Mechanisms
+- **Automatic Backup**: Creates `backup_*` snapshot before any restore
+- **User Confirmation**: Modal dialog requires explicit "Restore" click
+- **Progress Feedback**: Shows "Creating backup..." and "Restoring..." steps
+- **Error Recovery**: If restore fails, backup is still saved
+- **No Data Loss**: All current files backed up before modification
+
 ## Development Commands
 
 ```bash
@@ -201,6 +250,14 @@ Press F5 in VS Code
 - State Management: Toggle modes and selections
 - Visual Feedback: Color-coded diffs and status badges
 
+**Phase 5:**
+- File System Operations: Writing files, creating directories
+- Recursive Directory Walking: Scanning entire workspace
+- Backup Strategies: Automatic safety snapshots
+- User Confirmation Patterns: Modal dialogs
+- Progress Notifications: withProgress API
+- Error Handling: Try-catch with user feedback
+
 ### Available Commands
 - **Hindsight: Start Watching Files** - Begin file monitoring
 - **Hindsight: Stop Watching Files** - Stop file monitoring
@@ -222,6 +279,12 @@ Press F5 in VS Code
 
 ---
 
-**Phase 1-4 Complete!** 🎉
+**Phase 1-5 Complete!** 🎉
 
-You now have Hindsight - a functional time-travel IDE with visual snapshot browsing and diff comparison!
+You now have Hindsight - a fully functional time-travel IDE with:
+- ✅ Automatic snapshot capture
+- ✅ Visual timeline browsing
+- ✅ Diff comparison
+- ✅ **One-click code restoration**
+
+The core MVP is complete! You can now travel back in time and restore your code to any previous state!

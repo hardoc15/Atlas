@@ -45,6 +45,7 @@
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/diff": "^7.0.2",
     "@types/node": "20.x",
     "@types/vscode": "^1.85.0",
@@ -54,6 +55,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "better-sqlite3": "^12.4.1",
     "diff": "^8.0.2"
   }
 }
