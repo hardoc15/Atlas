@@ -31,8 +31,8 @@ export class TimelinePanel {
 
         // Otherwise, create a new panel
         const panel = vscode.window.createWebviewPanel(
-            'atlasTimeline',
-            'Atlas Time Travel',
+            'hindsightTimeline',
+            'Hindsight Time Travel',
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -121,7 +121,7 @@ export class TimelinePanel {
      */
     private async _update() {
         const webview = this._panel.webview;
-        this._panel.title = 'Atlas Time Travel';
+        this._panel.title = 'Hindsight Time Travel';
 
         const snapshots = await this._snapshotManager.getAllSnapshots();
         this._panel.webview.html = this._getHtmlForWebview(webview, snapshots);
@@ -340,7 +340,7 @@ export class TimelinePanel {
         </head>
         <body>
             <div class="header">
-                <h1 id="header-title">📸 Atlas Time Travel</h1>
+                <h1 id="header-title">🔍 Hindsight Time Travel</h1>
                 <div class="header-buttons">
                     <button class="btn btn-secondary" id="compare-btn" onclick="toggleCompareMode()">Compare Mode</button>
                     <button class="btn" onclick="refresh()">Refresh</button>
@@ -409,7 +409,7 @@ export class TimelinePanel {
                         btn.textContent = 'Compare Mode';
                         btn.classList.remove('btn');
                         btn.classList.add('btn-secondary');
-                        title.textContent = '📸 Atlas Time Travel';
+                        title.textContent = '🔍 Hindsight Time Travel';
                         compareSnapshots = { old: null, new: null };
                     }
                     renderTimeline();

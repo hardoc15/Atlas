@@ -1,6 +1,6 @@
 {
-  "name": "atlas-time-travel",
-  "displayName": "Atlas - Code Time Travel",
+  "name": "hindsight-time-travel",
+  "displayName": "Hindsight - Code Time Travel",
   "description": "Automatic code snapshots with time travel debugging",
   "version": "0.1.0",
   "engines": {
@@ -16,24 +16,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "atlas.startWatching",
-        "title": "Atlas: Start Watching Files"
+        "command": "hindsight.startWatching",
+        "title": "Hindsight: Start Watching Files"
       },
       {
-        "command": "atlas.stopWatching",
-        "title": "Atlas: Stop Watching Files"
+        "command": "hindsight.stopWatching",
+        "title": "Hindsight: Stop Watching Files"
       },
       {
-        "command": "atlas.showStatus",
-        "title": "Atlas: Show Status"
+        "command": "hindsight.showStatus",
+        "title": "Hindsight: Show Status"
       },
       {
-        "command": "atlas.listSnapshots",
-        "title": "Atlas: List Snapshots"
+        "command": "hindsight.listSnapshots",
+        "title": "Hindsight: List Snapshots"
       },
       {
-        "command": "atlas.openTimeline",
-        "title": "Atlas: Open Time Travel"
+        "command": "hindsight.openTimeline",
+        "title": "Hindsight: Open Time Travel"
       }
     ]
   },

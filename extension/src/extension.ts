@@ -11,15 +11,15 @@ let snapshotManager: SnapshotManager | undefined;
  * VS Code will call this when the workspace opens (due to onStartupFinished activation event)
  */
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Atlas extension is now active!');
+    console.log('Hindsight extension is now active!');
 
     // Show a welcome message
-    vscode.window.showInformationMessage('Atlas Time Travel is now watching your code!');
+    vscode.window.showInformationMessage('Hindsight is now watching your code!');
 
     // Register the "Start Watching" command
-    const startCommand = vscode.commands.registerCommand('atlas.startWatching', () => {
+    const startCommand = vscode.commands.registerCommand('hindsight.startWatching', () => {
         if (fileWatcher) {
-            vscode.window.showWarningMessage('Atlas is already watching files!');
+            vscode.window.showWarningMessage('Hindsight is already watching files!');
             return;
         }
 
@@ -31,37 +31,37 @@ export function activate(context: vscode.ExtensionContext) {
 
         fileWatcher = new FileWatcher(workspaceFolder.uri.fsPath);
         fileWatcher.start();
-        vscode.window.showInformationMessage('Atlas started watching files!');
+        vscode.window.showInformationMessage('Hindsight started watching files!');
     });
 
     // Register the "Stop Watching" command
-    const stopCommand = vscode.commands.registerCommand('atlas.stopWatching', () => {
+    const stopCommand = vscode.commands.registerCommand('hindsight.stopWatching', () => {
         if (!fileWatcher) {
-            vscode.window.showWarningMessage('Atlas is not currently watching files.');
+            vscode.window.showWarningMessage('Hindsight is not currently watching files.');
             return;
         }
 
         fileWatcher.stop();
         fileWatcher = undefined;
-        vscode.window.showInformationMessage('Atlas stopped watching files.');
+        vscode.window.showInformationMessage('Hindsight stopped watching files.');
     });
 
     // Register the "Show Status" command
-    const statusCommand = vscode.commands.registerCommand('atlas.showStatus', () => {
+    const statusCommand = vscode.commands.registerCommand('hindsight.showStatus', () => {
         if (fileWatcher) {
             const stats = fileWatcher.getStats();
             vscode.window.showInformationMessage(
-                `Atlas Status: Active | Files changed: ${stats.filesChanged} | Last change: ${stats.lastChange || 'None'}`
+                `Hindsight Status: Active | Files changed: ${stats.filesChanged} | Last change: ${stats.lastChange || 'None'}`
             );
         } else {
-            vscode.window.showInformationMessage('Atlas Status: Inactive');
+            vscode.window.showInformationMessage('Hindsight Status: Inactive');
         }
     });
 
     // Register the "List Snapshots" command
-    const listSnapshotsCommand = vscode.commands.registerCommand('atlas.listSnapshots', async () => {
+    const listSnapshotsCommand = vscode.commands.registerCommand('hindsight.listSnapshots', async () => {
         if (!snapshotManager) {
-            vscode.window.showErrorMessage('Atlas is not initialized.');
+            vscode.window.showErrorMessage('Hindsight is not initialized.');
             return;
         }
 
@@ -100,9 +100,9 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Register the "Open Time Travel" command - NEW!
-    const openTimelineCommand = vscode.commands.registerCommand('atlas.openTimeline', () => {
+    const openTimelineCommand = vscode.commands.registerCommand('hindsight.openTimeline', () => {
         if (!snapshotManager) {
-            vscode.window.showErrorMessage('Atlas is not initialized.');
+            vscode.window.showErrorMessage('Hindsight is not initialized.');
             return;
         }
 
@@ -128,5 +128,5 @@ export function deactivate() {
     if (fileWatcher) {
         fileWatcher.stop();
     }
-    console.log('Atlas extension has been deactivated.');
+    console.log('Hindsight extension has been deactivated.');
 }

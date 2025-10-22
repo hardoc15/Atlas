@@ -1,6 +1,6 @@
-# Atlas - Code Time Travel IDE
+# Hindsight - Code Time Travel IDE
 
-A VS Code extension that automatically saves code snapshots and enables time-travel debugging.
+A VS Code extension that automatically saves code snapshots and enables time-travel debugging with 20/20 hindsight.
 
 ## Current Status: Phase 4 Complete ✅
 
@@ -22,35 +22,35 @@ A VS Code extension that automatically saves code snapshots and enables time-tra
 
 2. **Press F5** (or go to Run → Start Debugging)
    - This will open a new VS Code window titled **"Extension Development Host"**
-   - Your Atlas extension will be running in that window
+   - Your Hindsight extension will be running in that window
 
 3. **In the Extension Development Host window:**
    - Open any folder/project
-   - You should see a notification: "Atlas Time Travel is now watching your code!"
+   - You should see a notification: "Hindsight is now watching your code!"
 
 4. **Test file watching:**
    - Create or edit any file in the workspace
-   - Look at the bottom status bar - you should see "Atlas: filename.ext changed" messages
+   - Look at the bottom status bar - you should see "Hindsight: filename.ext changed" messages
    - Try these commands (Cmd+Shift+P or Ctrl+Shift+P):
-     - **Atlas: Show Status** - See how many files have changed
-     - **Atlas: Stop Watching** - Stop tracking changes
-     - **Atlas: Start Watching** - Resume tracking
+     - **Hindsight: Show Status** - See how many files have changed
+     - **Hindsight: Stop Watching** - Stop tracking changes
+     - **Hindsight: Start Watching** - Resume tracking
 
 5. **View logs:**
-   - In the Extension Development Host window, open the Output panel (View → Output)
-   - Select "Extension Host" from the dropdown
-   - You'll see console logs like `[Atlas] File changed: src/app.ts`
+   - In the Extension Development Host window, open the Debug Console
+   - You'll see console logs like `[Hindsight] File changed: src/app.ts`
 
 ### Project Structure
 
 ```
-Atlas/
+Hindsight/
 ├── extension/              # VS Code extension
 │   ├── src/
 │   │   ├── extension.ts        # Main entry point
 │   │   ├── fileWatcher.ts      # File watching logic
 │   │   ├── snapshotManager.ts  # Snapshot creation/storage
 │   │   ├── timelinePanel.ts    # Time travel UI webview
+│   │   ├── diffViewer.ts       # Diff comparison webview
 │   │   └── types.ts            # TypeScript type definitions
 │   ├── out/                    # Compiled JavaScript (generated)
 │   ├── package.json            # Extension manifest
@@ -58,7 +58,7 @@ Atlas/
 ├── .vscode/
 │   ├── launch.json             # Debug configuration
 │   └── tasks.json              # Build tasks
-└── .atlas/                     # Snapshot storage (created in workspace)
+└── .hindsight/                 # Snapshot storage (created in workspace)
     └── snapshots/              # Individual snapshot JSON files
 ```
 
@@ -73,7 +73,7 @@ Atlas/
 ## Phase 2: Snapshot System ✅
 
 ### What We Built
-- `.atlas/` folder structure for storing snapshots
+- `.hindsight/` folder structure for storing snapshots
 - SnapshotManager class for creating/saving/loading snapshots
 - Automatic snapshot creation on file save/create
 - JSON-based storage with timestamps and metadata
@@ -97,7 +97,7 @@ Atlas/
 ### How to Use
 1. **Open the Time Travel Panel:**
    - Press Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows)
-   - Type "Atlas: Open Time Travel"
+   - Type "Hindsight: Open Time Travel"
    - A new panel will open showing your snapshot timeline
 
 2. **Browse Snapshots:**
@@ -128,7 +128,7 @@ Atlas/
 
 ### How to Use
 1. **Open Timeline Panel:**
-   - Run "Atlas: Open Time Travel" command
+   - Run "Hindsight: Open Time Travel" command
 
 2. **Enter Compare Mode:**
    - Click "Compare Mode" button in the timeline
@@ -202,11 +202,11 @@ Press F5 in VS Code
 - Visual Feedback: Color-coded diffs and status badges
 
 ### Available Commands
-- **Atlas: Start Watching Files** - Begin file monitoring
-- **Atlas: Stop Watching Files** - Stop file monitoring
-- **Atlas: Show Status** - View statistics
-- **Atlas: List Snapshots** - Quick Pick menu of snapshots
-- **Atlas: Open Time Travel** - Open the timeline UI panel
+- **Hindsight: Start Watching Files** - Begin file monitoring
+- **Hindsight: Stop Watching Files** - Stop file monitoring
+- **Hindsight: Show Status** - View statistics
+- **Hindsight: List Snapshots** - Quick Pick menu of snapshots
+- **Hindsight: Open Time Travel** - Open the timeline UI panel
 
 ### Files Explained
 - **extension.ts**: Main entry point, command registration
@@ -224,4 +224,4 @@ Press F5 in VS Code
 
 **Phase 1-4 Complete!** 🎉
 
-You now have a functional time-travel IDE with visual snapshot browsing and diff comparison!
+You now have Hindsight - a functional time-travel IDE with visual snapshot browsing and diff comparison!

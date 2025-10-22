@@ -21,8 +21,8 @@ npm-debug.log*
 .env
 .env.local
 
-# Atlas snapshots (user data - don't commit)
-.atlas/
+# Hindsight snapshots (user data - don't commit)
+.hindsight/
 
 # IDE
 .idea/

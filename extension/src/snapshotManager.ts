@@ -13,7 +13,7 @@ export class SnapshotManager {
 
     constructor(workspacePath: string) {
         this.workspacePath = workspacePath;
-        this.atlasDir = path.join(workspacePath, '.atlas');
+        this.atlasDir = path.join(workspacePath, '.hindsight');
         this.snapshotsDir = path.join(this.atlasDir, 'snapshots');
 
         // Create the directories if they don't exist
@@ -30,12 +30,12 @@ export class SnapshotManager {
 
         if (!fs.existsSync(this.atlasDir)) {
             fs.mkdirSync(this.atlasDir, { recursive: true });
-            console.log(`[Atlas] Created directory: ${this.atlasDir}`);
+            console.log(`[Hindsight] Created directory: ${this.atlasDir}`);
         }
 
         if (!fs.existsSync(this.snapshotsDir)) {
             fs.mkdirSync(this.snapshotsDir, { recursive: true });
-            console.log(`[Atlas] Created directory: ${this.snapshotsDir}`);
+            console.log(`[Hindsight] Created directory: ${this.snapshotsDir}`);
         }
     }
 
@@ -77,11 +77,11 @@ export class SnapshotManager {
             // Save to disk
             await this.saveSnapshot(snapshot);
 
-            console.log(`[Atlas] Created snapshot: ${id} for ${relativePath}`);
+            console.log(`[Hindsight] Created snapshot: ${id} for ${relativePath}`);
             return snapshot;
 
         } catch (error) {
-            console.error(`[Atlas] Error creating snapshot:`, error);
+            console.error(`[Hindsight] Error creating snapshot:`, error);
             return null;
         }
     }
@@ -131,7 +131,7 @@ export class SnapshotManager {
 
             return snapshot;
         } catch (error) {
-            console.error(`[Atlas] Error loading snapshot ${id}:`, error);
+            console.error(`[Hindsight] Error loading snapshot ${id}:`, error);
             return null;
         }
     }
@@ -152,7 +152,7 @@ export class SnapshotManager {
             // Sort by ID (which includes timestamp) - newest first
             return snapshotIds.sort().reverse();
         } catch (error) {
-            console.error(`[Atlas] Error reading snapshots:`, error);
+            console.error(`[Hindsight] Error reading snapshots:`, error);
             return [];
         }
     }
@@ -181,10 +181,10 @@ export class SnapshotManager {
         try {
             const filepath = path.join(this.snapshotsDir, `${id}.json`);
             await fs.promises.unlink(filepath);
-            console.log(`[Atlas] Deleted snapshot: ${id}`);
+            console.log(`[Hindsight] Deleted snapshot: ${id}`);
             return true;
         } catch (error) {
-            console.error(`[Atlas] Error deleting snapshot ${id}:`, error);
+            console.error(`[Hindsight] Error deleting snapshot ${id}:`, error);
             return false;
         }
     }

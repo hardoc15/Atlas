@@ -34,8 +34,8 @@ export class DiffViewer {
 
         // Otherwise, create a new panel
         const panel = vscode.window.createWebviewPanel(
-            'atlasDiff',
-            'Atlas Diff Viewer',
+            'hindsightDiff',
+            'Hindsight Diff Viewer',
             column,
             {
                 enableScripts: true,
@@ -156,7 +156,7 @@ export class DiffViewer {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Atlas Diff</title>
+            <title>Hindsight Diff</title>
             <style>
                 * {
                     margin: 0;
