@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { FileWatcher } from './fileWatcher';
 import { SnapshotManager } from './snapshotManager';
+import { TimelinePanel } from './timelinePanel';
 
 let fileWatcher: FileWatcher | undefined;
 let snapshotManager: SnapshotManager | undefined;
@@ -98,6 +99,16 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Register the "Open Time Travel" command - NEW!
+    const openTimelineCommand = vscode.commands.registerCommand('atlas.openTimeline', () => {
+        if (!snapshotManager) {
+            vscode.window.showErrorMessage('Atlas is not initialized.');
+            return;
+        }
+
+        TimelinePanel.createOrShow(context.extensionUri, snapshotManager);
+    });
+
     // Auto-start watching when extension activates
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (workspaceFolder) {
@@ -107,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Add commands to subscriptions so they're disposed when extension deactivates
-    context.subscriptions.push(startCommand, stopCommand, statusCommand, listSnapshotsCommand);
+    context.subscriptions.push(startCommand, stopCommand, statusCommand, listSnapshotsCommand, openTimelineCommand);
 }
 
 /**

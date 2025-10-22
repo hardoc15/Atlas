@@ -2,6 +2,12 @@
 
 A VS Code extension that automatically saves code snapshots and enables time-travel debugging.
 
+## Current Status: Phase 3 Complete ✅
+
+- ✅ Phase 1: File Watching
+- ✅ Phase 2: Snapshot System
+- ✅ Phase 3: Time Travel UI
+
 ## Phase 1: Basic Extension & File Watcher ✅
 
 ### What We Built
@@ -40,14 +46,19 @@ A VS Code extension that automatically saves code snapshots and enables time-tra
 Atlas/
 ├── extension/              # VS Code extension
 │   ├── src/
-│   │   ├── extension.ts    # Main entry point
-│   │   └── fileWatcher.ts  # File watching logic
-│   ├── out/                # Compiled JavaScript (generated)
-│   ├── package.json        # Extension manifest
-│   └── tsconfig.json       # TypeScript config
-└── .vscode/
-    ├── launch.json         # Debug configuration
-    └── tasks.json          # Build tasks
+│   │   ├── extension.ts        # Main entry point
+│   │   ├── fileWatcher.ts      # File watching logic
+│   │   ├── snapshotManager.ts  # Snapshot creation/storage
+│   │   ├── timelinePanel.ts    # Time travel UI webview
+│   │   └── types.ts            # TypeScript type definitions
+│   ├── out/                    # Compiled JavaScript (generated)
+│   ├── package.json            # Extension manifest
+│   └── tsconfig.json           # TypeScript config
+├── .vscode/
+│   ├── launch.json             # Debug configuration
+│   └── tasks.json              # Build tasks
+└── .atlas/                     # Snapshot storage (created in workspace)
+    └── snapshots/              # Individual snapshot JSON files
 ```
 
 ### What It Does Right Now
@@ -58,12 +69,52 @@ Atlas/
 - ✅ Logs all changes to console
 - ✅ Tracks statistics (number of changes)
 
-### What's Next (Phase 2)
+## Phase 2: Snapshot System ✅
 
-- Save snapshots of file contents to disk
-- Store snapshots in a `.atlas/` folder
-- Add timestamps and metadata
-- Create a simple snapshot viewer
+### What We Built
+- `.atlas/` folder structure for storing snapshots
+- SnapshotManager class for creating/saving/loading snapshots
+- Automatic snapshot creation on file save/create
+- JSON-based storage with timestamps and metadata
+- "List Snapshots" command to browse history
+
+### Features Added
+- ✅ Snapshot creation with unique IDs
+- ✅ File content capture with metadata
+- ✅ Persistent storage in JSON format
+- ✅ Quick Pick UI for browsing snapshots
+
+## Phase 3: Time Travel UI ✅
+
+### What We Built
+- Interactive webview panel for visualizing snapshot timeline
+- Beautiful UI with VS Code theme integration
+- Click snapshots to view file contents
+- Real-time message passing between extension and UI
+- Refresh functionality to update timeline
+
+### How to Use
+1. **Open the Time Travel Panel:**
+   - Press Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows)
+   - Type "Atlas: Open Time Travel"
+   - A new panel will open showing your snapshot timeline
+
+2. **Browse Snapshots:**
+   - See all snapshots in chronological order (newest first)
+   - Each card shows: timestamp, trigger type, and files changed
+
+3. **View Snapshot Details:**
+   - Click any snapshot card
+   - View the complete file content at that point in time
+   - See file sizes and metadata
+
+### Features Added
+- ✅ Custom webview panel with HTML/CSS/JavaScript
+- ✅ Timeline visualization with snapshot cards
+- ✅ Click to view snapshot details
+- ✅ Display file contents in code blocks
+- ✅ VS Code theme integration (dark/light mode support)
+- ✅ Refresh button to update timeline
 
 ## Development Commands
 
@@ -84,22 +135,41 @@ Press F5 in VS Code
 ## Learning Notes
 
 ### Key Concepts Learned
-- **VS Code Extension Structure**: package.json, activation events, commands
-- **TypeScript Compilation**: .ts → .js with source maps
-- **File System Watching**: VS Code's FileSystemWatcher API
-- **Event Listeners**: onDidChange, onDidCreate, onDidDelete
-- **VS Code APIs**: vscode.window, vscode.workspace, vscode.commands
+
+**Phase 1:**
+- VS Code Extension Structure: package.json, activation events, commands
+- TypeScript Compilation: .ts → .js with source maps
+- File System Watching: VS Code's FileSystemWatcher API
+- Event Listeners: onDidChange, onDidCreate, onDidDelete
+
+**Phase 2:**
+- File I/O Operations: fs.promises.readFile, writeFile, readdir
+- Async/Await: Asynchronous programming in TypeScript
+- JSON Storage: Serialization and deserialization
+- Date Handling: ISO strings, timestamp generation
+
+**Phase 3:**
+- VS Code Webview API: Custom UI panels
+- HTML/CSS in extensions: Building interfaces
+- Message Passing: Extension ↔ Webview communication
+- Event Handling: User interactions in webviews
+
+### Available Commands
+- **Atlas: Start Watching Files** - Begin file monitoring
+- **Atlas: Stop Watching Files** - Stop file monitoring
+- **Atlas: Show Status** - View statistics
+- **Atlas: List Snapshots** - Quick Pick menu of snapshots
+- **Atlas: Open Time Travel** - Open the timeline UI panel
 
 ### Files Explained
-- **package.json**: Extension manifest (tells VS Code what your extension is)
-- **tsconfig.json**: TypeScript compiler settings
-- **extension.ts**: Main entry point with activate() and deactivate()
-- **fileWatcher.ts**: Class that monitors file changes
-- **.eslintrc.json**: Code quality rules
-- **launch.json**: VS Code debugging configuration
+- **extension.ts**: Main entry point, command registration
+- **fileWatcher.ts**: File change detection and snapshot triggering
+- **snapshotManager.ts**: Snapshot creation, storage, and retrieval
+- **timelinePanel.ts**: Webview panel for time travel UI
+- **types.ts**: TypeScript interfaces and type definitions
 
 ---
 
-**Phase 1 Complete!** 🎉
+**Phase 1-3 Complete!** 🎉
 
-You now have a working VS Code extension that watches files. Next up: saving snapshots!
+You now have a functional time-travel IDE with visual snapshot browsing!

@@ -1,0 +1,395 @@
+import * as vscode from 'vscode';
+import { SnapshotManager } from './snapshotManager';
+import { Snapshot } from './types';
+
+/**
+ * TimelinePanel manages the webview that displays snapshot history
+ * This is our time travel UI!
+ */
+export class TimelinePanel {
+    public static currentPanel: TimelinePanel | undefined;
+    private readonly _panel: vscode.WebviewPanel;
+    private readonly _extensionUri: vscode.Uri;
+    private _disposables: vscode.Disposable[] = [];
+    private _snapshotManager: SnapshotManager;
+
+    /**
+     * Create or show the timeline panel
+     */
+    public static createOrShow(extensionUri: vscode.Uri, snapshotManager: SnapshotManager) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn
+            : undefined;
+
+        // If we already have a panel, show it
+        if (TimelinePanel.currentPanel) {
+            TimelinePanel.currentPanel._panel.reveal(column);
+            TimelinePanel.currentPanel.refresh();
+            return;
+        }
+
+        // Otherwise, create a new panel
+        const panel = vscode.window.createWebviewPanel(
+            'atlasTimeline',
+            'Atlas Time Travel',
+            column || vscode.ViewColumn.One,
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                localResourceRoots: [extensionUri]
+            }
+        );
+
+        TimelinePanel.currentPanel = new TimelinePanel(panel, extensionUri, snapshotManager);
+    }
+
+    private constructor(
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        snapshotManager: SnapshotManager
+    ) {
+        this._panel = panel;
+        this._extensionUri = extensionUri;
+        this._snapshotManager = snapshotManager;
+
+        // Set the webview's initial html content
+        this._update();
+
+        // Listen for when the panel is disposed (user closes it)
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+        // Handle messages from the webview
+        this._panel.webview.onDidReceiveMessage(
+            async (message) => {
+                switch (message.command) {
+                    case 'viewSnapshot':
+                        await this.viewSnapshot(message.snapshotId);
+                        return;
+                    case 'refresh':
+                        this.refresh();
+                        return;
+                }
+            },
+            null,
+            this._disposables
+        );
+    }
+
+    /**
+     * Refresh the timeline with latest snapshots
+     */
+    public async refresh() {
+        await this._update();
+    }
+
+    /**
+     * View details of a specific snapshot
+     */
+    private async viewSnapshot(snapshotId: string) {
+        const snapshot = await this._snapshotManager.loadSnapshot(snapshotId);
+
+        if (!snapshot) {
+            vscode.window.showErrorMessage(`Snapshot ${snapshotId} not found`);
+            return;
+        }
+
+        // Send snapshot data back to webview
+        this._panel.webview.postMessage({
+            command: 'showSnapshot',
+            snapshot: this.serializeSnapshot(snapshot)
+        });
+    }
+
+    /**
+     * Update the webview content
+     */
+    private async _update() {
+        const webview = this._panel.webview;
+        this._panel.title = 'Atlas Time Travel';
+
+        const snapshots = await this._snapshotManager.getAllSnapshots();
+        this._panel.webview.html = this._getHtmlForWebview(webview, snapshots);
+    }
+
+    /**
+     * Clean up resources
+     */
+    public dispose() {
+        TimelinePanel.currentPanel = undefined;
+
+        // Clean up our resources
+        this._panel.dispose();
+
+        while (this._disposables.length) {
+            const disposable = this._disposables.pop();
+            if (disposable) {
+                disposable.dispose();
+            }
+        }
+    }
+
+    /**
+     * Convert Snapshot to JSON-safe format
+     */
+    private serializeSnapshot(snapshot: Snapshot): any {
+        return {
+            id: snapshot.id,
+            timestamp: snapshot.timestamp.toISOString(),
+            trigger: snapshot.trigger,
+            files: snapshot.files,
+            gitCommit: snapshot.gitCommit
+        };
+    }
+
+    /**
+     * Generate the HTML for the webview
+     */
+    private _getHtmlForWebview(webview: vscode.Webview, snapshots: Snapshot[]) {
+        const snapshotsJson = JSON.stringify(
+            snapshots.map(s => this.serializeSnapshot(s))
+        );
+
+        return `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Atlas Time Travel</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                body {
+                    font-family: var(--vscode-font-family);
+                    color: var(--vscode-foreground);
+                    background-color: var(--vscode-editor-background);
+                    padding: 20px;
+                }
+
+                h1 {
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                    color: var(--vscode-foreground);
+                }
+
+                .header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+
+                .refresh-btn {
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 8px 16px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                }
+
+                .refresh-btn:hover {
+                    background-color: var(--vscode-button-hoverBackground);
+                }
+
+                .timeline {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .snapshot-card {
+                    background-color: var(--vscode-editor-inactiveSelectionBackground);
+                    border: 1px solid var(--vscode-panel-border);
+                    border-radius: 4px;
+                    padding: 15px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+
+                .snapshot-card:hover {
+                    background-color: var(--vscode-list-hoverBackground);
+                    border-color: var(--vscode-focusBorder);
+                }
+
+                .snapshot-card.selected {
+                    background-color: var(--vscode-list-activeSelectionBackground);
+                    border-color: var(--vscode-focusBorder);
+                }
+
+                .snapshot-time {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+
+                .snapshot-trigger {
+                    display: inline-block;
+                    background-color: var(--vscode-badge-background);
+                    color: var(--vscode-badge-foreground);
+                    padding: 2px 8px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    margin-bottom: 8px;
+                }
+
+                .snapshot-files {
+                    font-size: 13px;
+                    color: var(--vscode-descriptionForeground);
+                }
+
+                .snapshot-id {
+                    font-size: 11px;
+                    color: var(--vscode-descriptionForeground);
+                    margin-top: 5px;
+                    font-family: monospace;
+                }
+
+                .snapshot-detail {
+                    margin-top: 20px;
+                    padding: 20px;
+                    background-color: var(--vscode-editor-background);
+                    border: 1px solid var(--vscode-panel-border);
+                    border-radius: 4px;
+                    display: none;
+                }
+
+                .snapshot-detail.visible {
+                    display: block;
+                }
+
+                .file-content {
+                    margin-top: 15px;
+                }
+
+                .file-header {
+                    font-weight: bold;
+                    color: var(--vscode-textLink-foreground);
+                    margin-bottom: 10px;
+                }
+
+                .code-block {
+                    background-color: var(--vscode-textCodeBlock-background);
+                    border: 1px solid var(--vscode-panel-border);
+                    padding: 15px;
+                    border-radius: 4px;
+                    overflow-x: auto;
+                    font-family: var(--vscode-editor-font-family);
+                    font-size: var(--vscode-editor-font-size);
+                    white-space: pre;
+                    line-height: 1.5;
+                }
+
+                .empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: var(--vscode-descriptionForeground);
+                }
+
+                .empty-state h2 {
+                    margin-bottom: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>📸 Atlas Time Travel</h1>
+                <button class="refresh-btn" onclick="refresh()">Refresh</button>
+            </div>
+
+            <div id="timeline" class="timeline"></div>
+            <div id="snapshot-detail" class="snapshot-detail"></div>
+
+            <script>
+                const vscode = acquireVsCodeApi();
+                let snapshots = ${snapshotsJson};
+                let selectedSnapshotId = null;
+
+                function renderTimeline() {
+                    const timeline = document.getElementById('timeline');
+
+                    if (snapshots.length === 0) {
+                        timeline.innerHTML = \`
+                            <div class="empty-state">
+                                <h2>No snapshots yet</h2>
+                                <p>Edit or create files to start capturing snapshots!</p>
+                            </div>
+                        \`;
+                        return;
+                    }
+
+                    timeline.innerHTML = snapshots.map(snapshot => {
+                        const date = new Date(snapshot.timestamp);
+                        const timeStr = date.toLocaleString();
+                        const fileList = snapshot.files.map(f => f.path).join(', ');
+                        const isSelected = snapshot.id === selectedSnapshotId ? 'selected' : '';
+
+                        return \`
+                            <div class="snapshot-card \${isSelected}" onclick="selectSnapshot('\${snapshot.id}')">
+                                <div class="snapshot-time">\${timeStr}</div>
+                                <span class="snapshot-trigger">\${snapshot.trigger}</span>
+                                <div class="snapshot-files">Files: \${fileList}</div>
+                                <div class="snapshot-id">\${snapshot.id}</div>
+                            </div>
+                        \`;
+                    }).join('');
+                }
+
+                function selectSnapshot(snapshotId) {
+                    selectedSnapshotId = snapshotId;
+                    vscode.postMessage({ command: 'viewSnapshot', snapshotId: snapshotId });
+                    renderTimeline();
+                }
+
+                function refresh() {
+                    vscode.postMessage({ command: 'refresh' });
+                }
+
+                // Listen for messages from the extension
+                window.addEventListener('message', event => {
+                    const message = event.data;
+
+                    switch (message.command) {
+                        case 'showSnapshot':
+                            displaySnapshot(message.snapshot);
+                            break;
+                    }
+                });
+
+                function displaySnapshot(snapshot) {
+                    const detailDiv = document.getElementById('snapshot-detail');
+
+                    const filesHtml = snapshot.files.map(file => \`
+                        <div class="file-content">
+                            <div class="file-header">📄 \${file.path} (\${file.size} bytes)</div>
+                            <div class="code-block">\${escapeHtml(file.content)}</div>
+                        </div>
+                    \`).join('');
+
+                    detailDiv.innerHTML = \`
+                        <h2>Snapshot Details</h2>
+                        <p><strong>Time:</strong> \${new Date(snapshot.timestamp).toLocaleString()}</p>
+                        <p><strong>Trigger:</strong> \${snapshot.trigger}</p>
+                        <p><strong>ID:</strong> \${snapshot.id}</p>
+                        \${filesHtml}
+                    \`;
+
+                    detailDiv.classList.add('visible');
+                }
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                // Initial render
+                renderTimeline();
+            </script>
+        </body>
+        </html>`;
+    }
+}

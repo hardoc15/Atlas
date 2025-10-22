@@ -30,6 +30,10 @@
       {
         "command": "atlas.listSnapshots",
         "title": "Atlas: List Snapshots"
+      },
+      {
+        "command": "atlas.openTimeline",
+        "title": "Atlas: Open Time Travel"
       }
     ]
   },
