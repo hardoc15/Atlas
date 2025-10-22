@@ -198,6 +198,118 @@ export class SnapshotManager {
     }
 
     /**
+     * Restore files from a snapshot
+     * This writes the snapshot's file contents back to the workspace
+     * IMPORTANT: Creates a backup snapshot before restoring!
+     */
+    public async restoreSnapshot(snapshotId: string): Promise<{ success: boolean; backupId?: string; error?: string }> {
+        try {
+            // Load the snapshot to restore
+            const snapshot = await this.loadSnapshot(snapshotId);
+            if (!snapshot) {
+                return { success: false, error: 'Snapshot not found' };
+            }
+
+            // Create a backup of current state before restoring
+            const backupId = await this.createBackupBeforeRestore();
+            console.log(`[Hindsight] Created backup snapshot before restore: ${backupId}`);
+
+            // Restore each file from the snapshot
+            for (const file of snapshot.files) {
+                const filePath = path.join(this.workspacePath, file.path);
+
+                // Ensure the directory exists
+                const dir = path.dirname(filePath);
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true });
+                }
+
+                // Write the file content
+                await fs.promises.writeFile(filePath, file.content, 'utf8');
+                console.log(`[Hindsight] Restored file: ${file.path}`);
+            }
+
+            console.log(`[Hindsight] Successfully restored snapshot: ${snapshotId}`);
+            return { success: true, backupId: backupId };
+
+        } catch (error) {
+            console.error(`[Hindsight] Error restoring snapshot ${snapshotId}:`, error);
+            return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+    }
+
+    /**
+     * Create a backup snapshot of all files before restoring
+     * This allows undoing a restore if something goes wrong
+     */
+    private async createBackupBeforeRestore(): Promise<string> {
+        const backupId = `backup_${this.generateSnapshotId()}`;
+
+        // Get all files in workspace (excluding ignored patterns)
+        const allFiles = await this.getAllWorkspaceFiles();
+
+        const fileSnapshots = [];
+        for (const filePath of allFiles) {
+            try {
+                const content = await fs.promises.readFile(filePath, 'utf8');
+                const stats = await fs.promises.stat(filePath);
+                const relativePath = path.relative(this.workspacePath, filePath);
+
+                fileSnapshots.push({
+                    path: relativePath,
+                    content: content,
+                    size: stats.size
+                });
+            } catch (error) {
+                // Skip files that can't be read
+                console.warn(`[Hindsight] Could not backup file: ${filePath}`);
+            }
+        }
+
+        const backupSnapshot: Snapshot = {
+            id: backupId,
+            timestamp: new Date(),
+            trigger: 'manual', // Backup snapshots are manual
+            files: fileSnapshots
+        };
+
+        await this.saveSnapshot(backupSnapshot);
+        return backupId;
+    }
+
+    /**
+     * Get all files in the workspace (recursively)
+     * Excludes ignored patterns
+     */
+    private async getAllWorkspaceFiles(): Promise<string[]> {
+        const files: string[] = [];
+        const ignorePatterns = ['node_modules', '.git', 'dist', 'build', 'out', '.vscode', '.hindsight'];
+
+        const walkDir = async (dir: string) => {
+            const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                const relativePath = path.relative(this.workspacePath, fullPath);
+
+                // Skip ignored patterns
+                if (ignorePatterns.some(pattern => relativePath.includes(pattern))) {
+                    continue;
+                }
+
+                if (entry.isDirectory()) {
+                    await walkDir(fullPath);
+                } else if (entry.isFile()) {
+                    files.push(fullPath);
+                }
+            }
+        };
+
+        await walkDir(this.workspacePath);
+        return files;
+    }
+
+    /**
      * Generate a unique snapshot ID
      * Format: snapshot_YYYYMMDD_HHMMSS_randomhex
      */

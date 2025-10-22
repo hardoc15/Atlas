@@ -72,6 +72,9 @@ export class TimelinePanel {
                     case 'compareDiff':
                         await this.compareDiff(message.oldSnapshotId, message.newSnapshotId);
                         return;
+                    case 'restoreSnapshot':
+                        await this.restoreSnapshot(message.snapshotId);
+                        return;
                 }
             },
             null,
@@ -114,6 +117,55 @@ export class TimelinePanel {
             oldSnapshotId,
             newSnapshotId
         );
+    }
+
+    /**
+     * Restore code to a previous snapshot
+     */
+    private async restoreSnapshot(snapshotId: string) {
+        const snapshot = await this._snapshotManager.loadSnapshot(snapshotId);
+        if (!snapshot) {
+            vscode.window.showErrorMessage('Snapshot not found');
+            return;
+        }
+
+        // Ask for confirmation
+        const fileList = snapshot.files.map(f => f.path).join(', ');
+        const message = `Restore to snapshot from ${snapshot.timestamp.toLocaleString()}?\n\nFiles: ${fileList}\n\nA backup will be created automatically.`;
+
+        const choice = await vscode.window.showWarningMessage(
+            message,
+            { modal: true },
+            'Restore',
+            'Cancel'
+        );
+
+        if (choice !== 'Restore') {
+            return;
+        }
+
+        // Show progress
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Restoring snapshot...',
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: 'Creating backup...' });
+
+            const result = await this._snapshotManager.restoreSnapshot(snapshotId);
+
+            if (result.success) {
+                vscode.window.showInformationMessage(
+                    `✅ Successfully restored to ${snapshot.timestamp.toLocaleString()}. Backup saved: ${result.backupId}`
+                );
+                // Refresh the timeline
+                this.refresh();
+            } else {
+                vscode.window.showErrorMessage(
+                    `❌ Failed to restore snapshot: ${result.error}`
+                );
+            }
+        });
     }
 
     /**
@@ -305,6 +357,27 @@ export class TimelinePanel {
                     display: block;
                 }
 
+                .detail-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                }
+
+                .detail-header h2 {
+                    margin: 0;
+                }
+
+                .restore-btn {
+                    background-color: #007acc;
+                    color: white;
+                    font-weight: bold;
+                }
+
+                .restore-btn:hover {
+                    background-color: #005a9e;
+                }
+
                 .file-content {
                     margin-top: 15px;
                 }
@@ -468,7 +541,12 @@ export class TimelinePanel {
                     \`).join('');
 
                     detailDiv.innerHTML = \`
-                        <h2>Snapshot Details</h2>
+                        <div class="detail-header">
+                            <h2>Snapshot Details</h2>
+                            <button class="btn restore-btn" onclick="restoreSnapshot('\${snapshot.id}')">
+                                ⏮️ Restore to this Point
+                            </button>
+                        </div>
                         <p><strong>Time:</strong> \${new Date(snapshot.timestamp).toLocaleString()}</p>
                         <p><strong>Trigger:</strong> \${snapshot.trigger}</p>
                         <p><strong>ID:</strong> \${snapshot.id}</p>
@@ -476,6 +554,10 @@ export class TimelinePanel {
                     \`;
 
                     detailDiv.classList.add('visible');
+                }
+
+                function restoreSnapshot(snapshotId) {
+                    vscode.postMessage({ command: 'restoreSnapshot', snapshotId: snapshotId });
                 }
 
                 function escapeHtml(text) {
